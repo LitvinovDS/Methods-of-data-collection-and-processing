@@ -1,6 +1,6 @@
 import requests
 import json
-from pprint import pprint
+
 
 def save_repo(username):
     req = requests.get(f'https://api.github.com/users/{username}/repos')
@@ -10,11 +10,12 @@ def save_repo(username):
 
 
 def get_repo(username):
-    req =  requests.get(f'https://api.github.com/users/{username}/repos')
+    req = requests.get(f'https://api.github.com/users/{username}/repos')
     print("Список репозиториев пользователя", username, ":")
     for repo_name in req.json():
         print(repo_name['name'])
 
 
-get_repo('LitvinovDS')
-save_repo('LitvinovDS')
+user = input('Введите имя пользователя для поиска репозиториев: ')
+get_repo(user)
+save_repo(user)
