@@ -1,3 +1,16 @@
+'''
+1) Написать приложение, которое собирает основные новости с сайтов news.mail.ru, lenta.ru, yandex.news
+Для парсинга использовать xpath. Структура данных должна содержать:
+- название источника,
+- наименование новости,
+- ссылку на новость,
+- дата публикации
+
+Нельзя использовать BeautifulSoup
+
+2) Сложить все новости в БД(Mongo); без дубликатов, с обновлениями
+'''
+
 import requests
 import time
 from datetime import datetime
@@ -16,10 +29,11 @@ db = client[MONGO_DB]
 
 
 def update_db(col, inf):
+    col_name = col
     col = db[col]
     for item in inf:
         col.update_one({"$and": [{'news_name': {"$eq": item['news_name']}}, {'source': {"$eq": item['source']}}]}, {'$set': item}, upsert=True)
-    print(f'----- {MONGO_DB} databace updating completed! Collection name: {col} -----\n')
+    print(f'----- {MONGO_DB} databace updating completed! Collection name: {col_name} -----\n')
 
 
 def get_news_lenta():
@@ -38,7 +52,8 @@ def get_news_lenta():
         info_item["news_url"] = url + item.xpath(".//a/@href")[0]
         info_item["news_datetime"] = item.xpath(".//a/time/@datetime")[0]
         info.append(info_item)
-    update_db("Lenta", info)
+        time.sleep(0.01)
+    update_db("Lenta.ru", info)
     return info
 
 
@@ -58,11 +73,11 @@ def get_news_yandex():
         info["news_datetime"] = datetime.fromtimestamp(int(item.xpath('.//a/@data-log-id')[0].split('-')[1][:-3]))
         info_list.append(info)
         time.sleep(0.01)
-    update_db("Yandex", info_list)
+    update_db("Yandex.ru", info_list)
     return info_list
 
 
-def news_mail():
+def get_news_mail():
     url = "https://news.mail.ru/"
     r = requests.get(url, headers=headers)
     dom = html.fromstring(r.text)
@@ -87,7 +102,8 @@ def news_mail():
         info["source"] = get_mail_info(item.xpath(".//a/@href")[0])[0]
         info["news_datetime"] = get_mail_info(item.xpath(".//a/@href")[0])[1]
         info_list.append(info)
-    update_db("Mail", info_list)
+        time.sleep(0.01)
+    update_db("Mail.ru", info_list)
     return info_list
 
 
@@ -100,3 +116,8 @@ def get_mail_info(url):
         source = item.xpath(".//a/span/text()")[0]
         news_datetime = item.xpath('.//span//@datetime')[0]
     return [source, news_datetime]
+
+
+get_news_yandex()
+get_news_mail()
+get_news_lenta()
